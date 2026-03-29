@@ -197,6 +197,13 @@ main { max-width: 1200px; margin: 0 auto; padding: 2rem 1.5rem; }
 }
 .filter-btn:hover { border-color: var(--gold); color: var(--accent); }
 .filter-btn.active { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+.filter-label { font-size: 0.65rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.08em; margin: 10px 0 6px 4px; }
+.workout-badge {
+  display: inline-block; padding: 2px 8px; border-radius: 6px;
+  background: var(--gold); color: #fff; font-size: 0.65rem; font-weight: 600;
+  text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.04em;
+}
+.workout-tag { font-size: 0.7rem; color: var(--gold); font-weight: 500; margin-right: 6px; }
 
 /* ── SECTION ── */
 .section-header {
@@ -637,6 +644,11 @@ main { max-width: 1200px; margin: 0 auto; padding: 2rem 1.5rem; }
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
         </button>
         <div class="transfer-menu" id="transferMenu">
+          <div class="transfer-menu-header">Opções</div>
+          <button class="transfer-item" onclick="openWorkoutManagerModal()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+            <div class="item-info"><span class="item-label">Nomes de Treino</span><span class="item-sub">Dar nomes para Treino A, B...</span></div>
+          </button>
           <div class="transfer-menu-header">Configurações</div>
           <button class="transfer-item" onclick="exportJSON()">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
@@ -660,12 +672,19 @@ main { max-width: 1200px; margin: 0 auto; padding: 2rem 1.5rem; }
 <!-- EXERCÍCIOS -->
 <div class="page active" id="page-exercises">
   <main>
-    <div class="controls">
+    <div class="controls" style="flex-direction:column; align-items:stretch; gap:15px">
       <div class="search-wrap">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         <input class="search-input" type="text" id="searchInput" placeholder="Buscar exercício..." oninput="renderAll()">
       </div>
-      <div class="filter-btns" id="filterBtns"></div>
+      <div class="filter-group">
+        <div class="filter-label">Fichas de Treino</div>
+        <div id="workoutFilters" class="filter-btns"></div>
+      </div>
+      <div class="filter-group">
+        <div class="filter-label">Grupos Musculares</div>
+        <div id="filterBtns" class="filter-btns"></div>
+      </div>
     </div>
     <div id="exerciseSections"></div>
   </main>
@@ -779,9 +798,16 @@ main { max-width: 1200px; margin: 0 auto; padding: 2rem 1.5rem; }
           <input class="form-input" id="fSeries" type="text" placeholder="Ex: 4x12">
         </div>
         <div class="form-group">
-          <label class="form-label">Descanso</label>
-          <input class="form-input" id="fRest" type="text" placeholder="Ex: 60s">
+          <label class="form-label">Treino (A, B, C...)</label>
+          <input class="form-input" id="fWorkout" list="workoutList" placeholder="Ex: A">
+          <datalist id="workoutList">
+            <option>A</option><option>B</option><option>C</option><option>D</option><option>E</option>
+          </datalist>
         </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Descanso</label>
+        <input class="form-input" id="fRest" type="text" placeholder="Ex: 60s">
       </div>
       <div class="form-group">
         <label class="form-label">Foto do Exercício</label>
@@ -857,6 +883,28 @@ main { max-width: 1200px; margin: 0 auto; padding: 2rem 1.5rem; }
   </div>
 </div>
 
+<!-- MODAL GERENCIAR TREINOS -->
+<div class="modal-overlay" id="workManagerOverlay" onclick="if(event.target===this) closeWorkoutManagerModal()">
+  <div class="modal" style="max-width: 420px;">
+    <div class="modal-header">
+      <div class="modal-title">Nomes de Treino</div>
+      <button class="modal-close" onclick="closeWorkoutManagerModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <p class="import-hint" style="margin-bottom:15px">Dê um nome para cada ficha (ex: A = Peito). Isso aparecerá nos filtros e nos exercícios.</p>
+      <div id="workoutManagerList" style="display:flex; flex-direction:column; gap:12px">
+        <!-- JS populated -->
+      </div>
+      <div class="modal-footer" style="margin-top:20px">
+        <button class="btn-cancel" onclick="closeWorkoutManagerModal()">Fechar</button>
+        <button class="btn-save" onclick="saveWorkoutNames()">Salvar Nomes</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL IMC -->
 <div class="modal-overlay" id="imcModalOverlay" onclick="if(event.target===this) closeIMCModal()">
   <div class="modal" style="max-width: 360px;">
@@ -917,6 +965,8 @@ let imcHistory = JSON.parse(localStorage.getItem('forma_imc') || '[]');
 let weightGoals = JSON.parse(localStorage.getItem('forma_goals') || '{"initial":"","meta":"","desired":""}');
 let editingId = null;
 let activeFilter = 'Todos';
+let activeWorkout = 'Todos';
+let workoutNames = JSON.parse(localStorage.getItem('forma_workout_names') || '{}');
 let confirmCb = null;
 let mergeMode = 'merge';
 let activeTab = 'exercises';
@@ -966,27 +1016,39 @@ function switchTab(tab) {
 
 // ── EXERCISES ──
 function buildFilters() {
-  const used = [...new Set(exercises.map(e => e.muscle))].filter(Boolean);
-  const groups = ['Todos', ...used.sort()];
-  document.getElementById('filterBtns').innerHTML = groups.map(g =>
+  // Muscle filters
+  const usedMuscles = [...new Set(exercises.map(e => e.muscle).filter(Boolean))];
+  const muscleGroups = ['Todos', ...usedMuscles.sort()];
+  document.getElementById('filterBtns').innerHTML = muscleGroups.map(g =>
     `<button class="filter-btn ${g === activeFilter ? 'active' : ''}" onclick="setFilter('${g}')">${g}</button>`
   ).join('');
+
+  // Workout filters
+  const usedWorkouts = [...new Set(exercises.map(e => e.workout).filter(Boolean))];
+  const workoutGroups = ['Todos', ...usedWorkouts.sort()];
+  document.getElementById('workoutFilters').innerHTML = workoutGroups.map(g => {
+    const name = workoutNames[g] || '';
+    const label = g === 'Todos' ? 'Todos' : (name ? `${g}: ${name}` : `Treino ${g}`);
+    return `<button class="filter-btn ${g === activeWorkout ? 'active' : ''}" onclick="setWorkoutFilter('${g}')">${label}</button>`;
+  }).join('');
   
-  // Update datalist for modal
-  const dl = document.getElementById('muscleList');
-  if (dl) {
-    const options = [...new Set([...MUSCLES, ...used])].sort();
-    dl.innerHTML = options.map(o => `<option value="${o}">`).join('');
+  // Update datalists
+  const muscleDl = document.getElementById('muscleList');
+  if (muscleDl) {
+    const opts = [...new Set([...MUSCLES, ...usedMuscles])].sort();
+    muscleDl.innerHTML = opts.map(o => `<option value="${o}">`).join('');
   }
 }
-function setFilter(f) { activeFilter = f; buildFilters(); renderAll(); }
+function setFilter(f) { activeFilter = f; renderAll(); }
+function setWorkoutFilter(w) { activeWorkout = w; renderAll(); }
 
 function renderAll() {
   const q = document.getElementById('searchInput').value.toLowerCase();
   let filtered = exercises.filter(e => {
-    const mq = e.name.toLowerCase().includes(q) || (e.desc||'').toLowerCase().includes(q);
-    const mf = activeFilter === 'Todos' || e.muscle === activeFilter;
-    return mq && mf;
+    const searchMatch = e.name.toLowerCase().includes(q) || (e.desc||'').toLowerCase().includes(q);
+    const muscleMatch = activeFilter === 'Todos' || e.muscle === activeFilter;
+    const workoutMatch = activeWorkout === 'Todos' || e.workout === activeWorkout;
+    return searchMatch && muscleMatch && workoutMatch;
   });
   buildFilters();
   const container = document.getElementById('exerciseSections');
@@ -1049,7 +1111,10 @@ function cardHTML(e) {
   return `<div class="card">
     <div class="card-img-wrap">
       ${imgContent}${placeholder}
-      ${e.muscle?`<span class="card-muscle-badge">${e.muscle}</span>`:''}
+      <div style="position:absolute; top:10px; left:10px; display:flex; flex-direction:column; gap:4px; align-items:flex-start;">
+        ${e.workout?`<span class="workout-badge">TREINO ${e.workout}${workoutNames[e.workout]?` - ${workoutNames[e.workout]}`:''}</span>`:''}
+        ${e.muscle?`<span class="card-muscle-badge" style="position:static">${e.muscle}</span>`:''}
+      </div>
       <button class="card-fav-btn ${e.fav?'active':''}" onclick="toggleFav('${e.id}')" title="${e.fav?'Remover':'Favoritar'}">
         <svg viewBox="0 0 24 24" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
       </button>
@@ -1091,6 +1156,7 @@ function openEdit(id) {
   document.getElementById('modalTitle').textContent = 'Editar Exercício';
   document.getElementById('fName').value = e.name||'';
   document.getElementById('fMuscle').value = e.muscle||'';
+  document.getElementById('fWorkout').value = e.workout||'';
   document.getElementById('fDesc').value = e.desc||'';
   document.getElementById('fSeries').value = e.series||'';
   document.getElementById('fRest').value = e.rest||'';
@@ -1102,10 +1168,8 @@ function openEdit(id) {
 function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); editingId=null; clearForm(); }
 function handleOverlayClick(ev) { if(ev.target===document.getElementById('modalOverlay')) closeModal(); }
 function clearForm() {
-  ['fName','fMuscle','fDesc','fSeries','fRest','fImg','fYt'].forEach(id => document.getElementById(id).value='');
-  document.getElementById('imgPreview').innerHTML=`<div class="img-preview-placeholder">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-    <span>Prévia da imagem</span></div>`;
+  ['fName','fMuscle','fWorkout','fDesc','fSeries','fRest','fImg','fYt'].forEach(id => document.getElementById(id).value = '');
+  previewImg();
 }
 function previewImg() {
   const url = document.getElementById('fImg').value.trim();
@@ -1179,10 +1243,13 @@ function toggleTimer(id, seconds) {
 }
 function saveExercise() {
   const name = document.getElementById('fName').value.trim();
-  const muscle = document.getElementById('fMuscle').value;
+  const muscle = document.getElementById('fMuscle').value.trim();
   if (!name) { showToast('⚠️ Informe o nome'); return; }
   if (!muscle) { showToast('⚠️ Selecione o grupo muscular'); return; }
-  const data = { name, muscle,
+  const data = {
+    name: document.getElementById('fName').value.trim(),
+    muscle: document.getElementById('fMuscle').value.trim(),
+    workout: document.getElementById('fWorkout').value.trim().toUpperCase(),
     desc: document.getElementById('fDesc').value.trim(),
     series: document.getElementById('fSeries').value.trim(),
     rest: document.getElementById('fRest').value.trim(),
@@ -1218,6 +1285,46 @@ function toggleTransferMenu() {
 function closeTransferMenu() {
   document.getElementById('transferMenu').classList.remove('open');
   document.getElementById('transferBtn').classList.remove('spinning');
+}
+
+// ── WORKOUT MANAGER ──
+function openWorkoutManagerModal() {
+  document.getElementById('transferMenu').classList.remove('open');
+  document.getElementById('transferBtn').classList.remove('spinning');
+  
+  const list = document.getElementById('workoutManagerList');
+  // Sempre mostra A-E + quaisquer outros usados
+  const defaults = ['A', 'B', 'C', 'D', 'E'];
+  const used = [...new Set(exercises.map(e => e.workout).filter(Boolean))];
+  const all = [...new Set([...defaults, ...used])].sort();
+  
+  list.innerHTML = all.map(w => `
+    <div class="form-row" style="grid-template-columns: 50px 1fr; align-items: center; gap: 10px;">
+      <div style="font-weight:600; color:var(--gold); text-align:center">${w}</div>
+      <input class="form-input" id="wn-${w}" type="text" placeholder="Ex: Peito e Tríceps" value="${workoutNames[w]||''}">
+    </div>`).join('');
+  
+  document.getElementById('workManagerOverlay').classList.add('open');
+}
+function closeWorkoutManagerModal() { document.getElementById('workManagerOverlay').classList.remove('open'); }
+function saveWorkoutNames() {
+  const defaults = ['A', 'B', 'C', 'D', 'E'];
+  const used = [...new Set(exercises.map(e => e.workout).filter(Boolean))];
+  const all = [...new Set([...defaults, ...used])];
+  
+  all.forEach(w => {
+    const el = document.getElementById(`wn-${w}`);
+    if (el) {
+      const val = el.value.trim();
+      if (val) workoutNames[w] = val;
+      else delete workoutNames[w];
+    }
+  });
+  localStorage.setItem('forma_workout_names', JSON.stringify(workoutNames));
+  closeWorkoutManagerModal();
+  buildFilters();
+  renderAll();
+  showToast('✅ Nomes de treino atualizados!');
 }
 document.addEventListener('click', ev => {
   if (!document.getElementById('transferWrap').contains(ev.target)) closeTransferMenu();
