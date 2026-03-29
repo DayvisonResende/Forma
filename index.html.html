@@ -1,0 +1,1527 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>FORMA — Fitness & IMC</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#12100e">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #f7f5f2;
+  --surface: #ffffff;
+  --surface2: #f0ede8;
+  --border: #e2ddd7;
+  --text: #1a1814;
+  --text-muted: #8c8780;
+  --accent: #2a2520;
+  --accent-light: #4a4540;
+  --gold: #c9a96e;
+  --gold-light: #e8d5b0;
+  --danger: #c0392b;
+  --green: #27ae60;
+  --nav-h: 68px;
+  --radius: 12px;
+  --shadow: 0 2px 20px rgba(0,0,0,0.06);
+  --shadow-lg: 0 8px 40px rgba(0,0,0,0.10);
+  --white: #ffffff;
+  --accent-text: #ffffff;
+}
+
+[data-theme="dark"] {
+  --bg: #12100e;
+  --surface: #1a1816;
+  --surface2: #24211e;
+  --border: #2a2724;
+  --text: #e2ddd7;
+  --text-muted: #8c8780;
+  --accent: #e8d5b0;
+  --accent-light: #c9a96e;
+  --gold: #c9a96e;
+  --gold-light: #4a4540;
+  --white: #ffffff;
+  --accent-text: #12100e;
+  --shadow: 0 4px 30px rgba(0,0,0,0.3);
+  --shadow-lg: 0 12px 50px rgba(0,0,0,0.5);
+}
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  font-weight: 300;
+  padding-bottom: var(--nav-h);
+}
+
+/* ── HEADER ── */
+header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 100;
+  padding: 0 1.5rem;
+}
+.header-inner {
+  max-width: 1200px; margin: 0 auto;
+  display: flex; align-items: center; justify-content: space-between;
+  height: 60px;
+}
+.logo {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.7rem; font-weight: 600;
+  letter-spacing: 0.12em; color: var(--accent);
+}
+.logo span { color: var(--gold); }
+
+.header-actions { display: flex; gap: 10px; align-items: center; }
+
+.btn-theme {
+  display: flex; align-items: center; justify-content: center;
+  background: var(--surface); color: var(--text-muted);
+  border: 1px solid var(--border);
+  width: 38px; height: 38px; border-radius: 50%;
+  cursor: pointer; transition: all 0.2s;
+}
+.btn-theme:hover { border-color: var(--gold); background: var(--surface2); color: var(--accent); }
+.btn-theme svg { width: 17px; height: 17px; }
+[data-theme="dark"] .theme-sun { display: block; }
+[data-theme="dark"] .theme-moon { display: none; }
+.theme-sun { display: none; }
+.theme-moon { display: block; }
+
+.btn-add {
+  position: fixed;
+  bottom: calc(var(--nav-h) + 8px);
+  right: 16px;
+  width: 56px; height: 56px;
+  background: var(--accent); color: var(--accent-text); border: none;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: all 0.2s cubic-bezier(.34,1.56,.64,1);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.18);
+  z-index: 300;
+}
+.btn-add:hover { background: var(--accent-light); transform: scale(1.1); box-shadow: 0 8px 30px rgba(0,0,0,0.25); }
+.btn-add:active { transform: scale(0.95); }
+.btn-add svg { width: 24px; height: 24px; }
+.btn-add span { display: none; }
+.btn-add.hidden { display: none; }
+
+.btn-gear {
+  display: flex; align-items: center; justify-content: center;
+  background: var(--surface); color: var(--text-muted);
+  border: 1px solid var(--border);
+  width: 38px; height: 38px; border-radius: 50%;
+  cursor: pointer; transition: border-color 0.2s, background 0.2s, transform 0.35s, color 0.2s;
+}
+.btn-gear:hover { border-color: var(--gold); background: var(--surface2); color: var(--accent); }
+.btn-gear.spinning { transform: rotate(60deg); border-color: var(--gold); color: var(--accent); }
+.btn-gear svg { width: 17px; height: 17px; }
+
+/* ── BOTTOM NAV ── */
+.bottom-nav {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  height: var(--nav-h);
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-around;
+  z-index: 200;
+  padding: 0 1rem;
+  box-shadow: 0 -4px 20px rgba(0,0,0,0.06);
+}
+.nav-item {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  background: none; border: none; cursor: pointer;
+  padding: 8px 20px; border-radius: 14px;
+  transition: background 0.2s;
+  flex: 1; max-width: 120px;
+  color: var(--text-muted);
+}
+.nav-item svg { width: 22px; height: 22px; transition: stroke 0.2s; }
+.nav-item span {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.7rem; font-weight: 400;
+  letter-spacing: 0.04em;
+  transition: color 0.2s;
+}
+.nav-item.active { color: var(--accent); }
+.nav-item.active svg { stroke: var(--accent); }
+.nav-item.active span { color: var(--accent); font-weight: 500; }
+.nav-pip {
+  width: 4px; height: 4px; border-radius: 50%;
+  background: var(--gold);
+  margin-top: -2px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.nav-item.active .nav-pip { opacity: 1; }
+
+/* ── PAGES ── */
+.page { display: none; }
+.page.active { display: block; }
+
+main { max-width: 1200px; margin: 0 auto; padding: 2rem 1.5rem; }
+
+/* ── CONTROLS (exercises) ── */
+.controls {
+  display: flex; gap: 10px; flex-wrap: wrap;
+  margin-bottom: 2rem; align-items: center;
+}
+.search-wrap { position: relative; flex: 1; min-width: 200px; }
+.search-wrap svg {
+  position: absolute; left: 13px; top: 50%; transform: translateY(-50%);
+  color: var(--text-muted); width: 15px; height: 15px; pointer-events: none;
+}
+.search-input {
+  width: 100%; padding: 10px 13px 10px 38px;
+  border: 1px solid var(--border); border-radius: 100px;
+  background: var(--surface);
+  font-family: 'DM Sans', sans-serif; font-size: 0.85rem; font-weight: 300;
+  color: var(--text); outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.search-input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(201,169,110,0.15); }
+.search-input::placeholder { color: var(--text-muted); }
+
+.filter-btns { display: flex; gap: 7px; flex-wrap: wrap; }
+.filter-btn {
+  padding: 8px 16px; border: 1px solid var(--border);
+  border-radius: 100px; background: var(--surface);
+  font-family: 'DM Sans', sans-serif; font-size: 0.78rem; font-weight: 400;
+  color: var(--text-muted); cursor: pointer; transition: all 0.2s; white-space: nowrap;
+}
+.filter-btn:hover { border-color: var(--gold); color: var(--accent); }
+.filter-btn.active { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+
+/* ── SECTION ── */
+.section-header {
+  display: flex; align-items: baseline; gap: 10px;
+  margin-bottom: 1rem; margin-top: 2rem;
+}
+.section-header:first-of-type { margin-top: 0; }
+.section-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.4rem; font-weight: 400; color: var(--accent); letter-spacing: 0.03em;
+}
+.section-count { font-size: 0.72rem; color: var(--text-muted); font-weight: 300; }
+
+/* ── GRID ── */
+.exercise-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: 18px;
+}
+
+/* ── CARD ── */
+.card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); overflow: hidden;
+  box-shadow: var(--shadow); transition: transform 0.2s, box-shadow 0.2s;
+  display: flex; flex-direction: column;
+  animation: fadeUp 0.3s ease both;
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.card:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); }
+.card-img-wrap {
+  width: 100%; height: 180px; overflow: hidden;
+  background: var(--surface2); position: relative;
+}
+.card-img-wrap img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s; }
+.card:hover .card-img-wrap img { transform: scale(1.04); }
+.card-img-placeholder {
+  width: 100%; height: 100%;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-muted); flex-direction: column; gap: 7px;
+}
+.card-img-placeholder svg { width: 32px; height: 32px; opacity: 0.35; }
+.card-img-placeholder span { font-size: 0.72rem; opacity: 0.45; }
+.card-muscle-badge {
+  position: absolute; top: 10px; left: 10px;
+  background: rgba(255,255,255,0.92); backdrop-filter: blur(4px);
+  border: 1px solid var(--border); padding: 3px 9px;
+  border-radius: 100px; font-size: 0.68rem; font-weight: 500;
+  color: var(--accent); letter-spacing: 0.05em; text-transform: uppercase;
+}
+.card-fav-btn {
+  position: absolute; top: 8px; right: 10px;
+  background: rgba(255,255,255,0.92); backdrop-filter: blur(4px);
+  border: none; width: 30px; height: 30px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: transform 0.2s;
+}
+.card-fav-btn:hover { transform: scale(1.15); }
+.card-fav-btn svg { width: 14px; height: 14px; transition: fill 0.2s, stroke 0.2s; }
+.card-fav-btn.active svg { fill: var(--gold); stroke: var(--gold); }
+.card-fav-btn:not(.active) svg { fill: none; stroke: var(--text-muted); }
+.card-body { padding: 14px 16px 16px; flex: 1; display: flex; flex-direction: column; }
+.card-name {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.15rem; font-weight: 600; color: var(--accent); margin-bottom: 5px; line-height: 1.3;
+}
+.card-desc {
+  font-size: 0.8rem; color: var(--text-muted); font-weight: 300; line-height: 1.6; flex: 1;
+  display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.card-actions {
+  display: flex; gap: 7px; margin-top: 12px;
+  padding-top: 12px; border-top: 1px solid var(--border);
+}
+.btn-yt {
+  display: flex; align-items: center; gap: 5px;
+  background: #ff0000; color: #fff; border: none;
+  padding: 7px 12px; border-radius: 8px;
+  font-family: 'DM Sans', sans-serif; font-size: 0.76rem; font-weight: 400;
+  cursor: pointer; transition: opacity 0.2s, transform 0.15s;
+  text-decoration: none; flex: 1; justify-content: center;
+}
+.btn-yt:hover { opacity: 0.88; transform: translateY(-1px); }
+.btn-yt svg { width: 13px; height: 13px; }
+.btn-yt.disabled { background: var(--border); color: var(--text-muted); cursor: default; pointer-events: none; }
+.btn-edit, .btn-del {
+  display: flex; align-items: center; justify-content: center;
+  background: var(--surface2); border: 1px solid var(--border);
+  color: var(--text-muted); width: 34px; height: 34px;
+  border-radius: 8px; cursor: pointer; transition: all 0.2s; flex-shrink: 0;
+}
+.btn-edit svg, .btn-del svg { width: 14px; height: 14px; }
+.btn-edit:hover { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn-del:hover { background: var(--danger); border-color: var(--danger); color: #fff; }
+
+/* ── EMPTY ── */
+.empty-state {
+  grid-column: 1/-1; text-align: center;
+  padding: 4rem 2rem; color: var(--text-muted);
+}
+.empty-state svg { width: 48px; height: 48px; opacity: 0.22; margin-bottom: 1rem; }
+.empty-state p { font-family: 'Cormorant Garamond', serif; font-size: 1.25rem; opacity: 0.55; }
+.empty-state small { font-size: 0.8rem; font-weight: 300; }
+
+/* ── TRANSFER MENU ── */
+.transfer-wrap { position: relative; }
+.transfer-menu {
+  display: none; position: absolute; top: calc(100% + 8px); right: 0;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 14px; box-shadow: var(--shadow-lg);
+  min-width: 220px; overflow: hidden; z-index: 300;
+  animation: menuIn 0.18s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes menuIn {
+  from { opacity: 0; transform: translateY(-6px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.transfer-menu.open { display: block; }
+.transfer-menu-header {
+  padding: 11px 15px 7px; font-size: 0.68rem; font-weight: 500;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--text-muted); border-bottom: 1px solid var(--border);
+}
+.transfer-item {
+  display: flex; align-items: center; gap: 11px;
+  width: 100%; padding: 12px 15px; border: none; background: transparent;
+  font-family: 'DM Sans', sans-serif; font-size: 0.83rem; font-weight: 300;
+  color: var(--text); cursor: pointer; transition: background 0.15s; text-align: left;
+}
+.transfer-item:hover { background: var(--surface2); }
+.transfer-item svg { width: 15px; height: 15px; color: var(--text-muted); flex-shrink: 0; }
+.transfer-item .item-info { display: flex; flex-direction: column; gap: 1px; }
+.transfer-item .item-label { font-weight: 400; }
+.transfer-item .item-sub { font-size: 0.7rem; color: var(--text-muted); }
+.transfer-item + .transfer-item { border-top: 1px solid var(--border); }
+
+/* ── IMC PAGE ── */
+.imc-page { max-width: 680px; margin: 0 auto; padding: 2rem 1.5rem; }
+
+.imc-calc-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 18px; padding: 28px; box-shadow: var(--shadow);
+  margin-bottom: 24px;
+}
+.imc-calc-card h2 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.5rem; font-weight: 600; color: var(--accent);
+  margin-bottom: 20px; letter-spacing: 0.02em;
+}
+.imc-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 18px; }
+.imc-field label {
+  display: block; font-size: 0.72rem; font-weight: 500;
+  letter-spacing: 0.07em; text-transform: uppercase;
+  color: var(--text-muted); margin-bottom: 6px;
+}
+.imc-field input {
+  width: 100%; padding: 11px 13px;
+  border: 1px solid var(--border); border-radius: 10px;
+  background: var(--bg); font-family: 'DM Sans', sans-serif;
+  font-size: 1rem; font-weight: 300; color: var(--text); outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.imc-field input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(201,169,110,0.15); background: var(--surface); }
+
+.btn-calc {
+  width: 100%; padding: 13px;
+  background: var(--accent); color: var(--accent-text); border: none;
+  border-radius: 12px; font-family: 'DM Sans', sans-serif;
+  font-size: 0.9rem; font-weight: 400; letter-spacing: 0.04em;
+  cursor: pointer; transition: background 0.2s, transform 0.15s;
+}
+.btn-calc:hover { background: var(--accent-light); transform: translateY(-1px); }
+
+/* IMC result badge */
+.imc-result {
+  display: none; margin-top: 20px;
+  background: var(--bg); border-radius: 14px; padding: 20px;
+  border: 1px solid var(--border);
+  animation: fadeUp 0.3s ease;
+}
+.imc-result.visible { display: flex; gap: 16px; align-items: center; }
+.imc-number {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 3rem; font-weight: 600; line-height: 1;
+  color: var(--accent); min-width: 90px; text-align: center;
+}
+.imc-info { flex: 1; }
+.imc-class {
+  font-size: 1rem; font-weight: 500; margin-bottom: 4px;
+}
+.imc-desc { font-size: 0.8rem; color: var(--text-muted); font-weight: 300; line-height: 1.5; }
+
+/* IMC color classes */
+.imc-blue   { color: #2980b9; }
+.imc-green  { color: #27ae60; }
+.imc-yellow { color: #f39c12; }
+.imc-orange { color: #e67e22; }
+.imc-red    { color: #c0392b; }
+
+/* IMC scale bar */
+.imc-scale { margin-top: 14px; }
+.imc-scale-bar {
+  height: 7px; border-radius: 100px; width: 100%;
+  background: linear-gradient(to right, #2980b9 0%, #27ae60 30%, #f1c40f 50%, #e67e22 70%, #c0392b 100%);
+  position: relative; overflow: visible;
+}
+.imc-marker {
+  position: absolute; top: -4px;
+  width: 15px; height: 15px; border-radius: 50%;
+  background: var(--accent); border: 2px solid var(--surface);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+  transform: translateX(-50%);
+  transition: left 0.4s cubic-bezier(.34,1.56,.64,1);
+}
+
+/* History */
+.imc-history-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 18px; padding: 24px; box-shadow: var(--shadow);
+  margin-bottom: 24px;
+}
+.imc-history-card h2 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.35rem; font-weight: 400; color: var(--accent);
+  margin-bottom: 16px;
+}
+.history-empty {
+  text-align: center; padding: 2rem; color: var(--text-muted);
+  font-size: 0.83rem; font-weight: 300;
+}
+.history-list { display: flex; flex-direction: column; gap: 0; }
+.history-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 0; border-bottom: 1px solid var(--border);
+}
+.history-item:last-child { border-bottom: none; }
+.history-dot {
+  width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+}
+.history-imc { font-family: 'Cormorant Garamond', serif; font-size: 1.2rem; font-weight: 600; color: var(--accent); min-width: 52px; }
+.history-meta { flex: 1; }
+.history-class { font-size: 0.8rem; font-weight: 400; color: var(--text); }
+.history-date { font-size: 0.72rem; color: var(--text-muted); font-weight: 300; margin-top: 1px; }
+.history-detail { font-size: 0.72rem; color: var(--text-muted); font-weight: 300; }
+.btn-del-hist {
+  background: none; border: none; color: var(--text-muted); cursor: pointer;
+  padding: 4px; border-radius: 6px; transition: color 0.2s;
+}
+.btn-del-hist:hover { color: var(--danger); }
+.btn-del-hist svg { width: 14px; height: 14px; display: block; }
+
+/* Chart */
+.imc-chart-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 18px; padding: 24px; box-shadow: var(--shadow);
+}
+.imc-chart-card h2 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.35rem; font-weight: 400; color: var(--accent); margin-bottom: 16px;
+}
+.chart-empty {
+  text-align: center; padding: 2.5rem; color: var(--text-muted);
+  font-size: 0.83rem; font-weight: 300;
+}
+
+/* ── MODALS ── */
+.modal-overlay {
+  display: none; position: fixed; inset: 0; z-index: 400;
+  background: rgba(26,24,20,0.52); backdrop-filter: blur(4px);
+  align-items: center; justify-content: center; padding: 1.5rem;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: var(--surface); border-radius: 18px;
+  width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.18);
+  animation: modalIn 0.25s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes modalIn {
+  from { opacity: 0; transform: scale(0.94) translateY(16px); }
+  to   { opacity: 1; scale: 1; transform: translateY(0); }
+}
+.modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 22px 26px 0;
+}
+.modal-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.5rem; font-weight: 600; color: var(--accent);
+}
+.modal-close {
+  background: var(--surface2); border: none;
+  width: 30px; height: 30px; border-radius: 50%;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  color: var(--text-muted); transition: background 0.2s;
+}
+.modal-close:hover { background: var(--border); }
+.modal-close svg { width: 14px; height: 14px; }
+.modal-body { padding: 18px 26px 26px; }
+.form-group { margin-bottom: 16px; }
+.form-label {
+  display: block; font-size: 0.72rem; font-weight: 500;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--text-muted); margin-bottom: 6px;
+}
+.form-input, .form-select, .form-textarea {
+  width: 100%; padding: 10px 13px;
+  border: 1px solid var(--border); border-radius: 10px;
+  background: var(--bg); font-family: 'DM Sans', sans-serif;
+  font-size: 0.875rem; font-weight: 300; color: var(--text); outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.form-input:focus, .form-select:focus, .form-textarea:focus {
+  border-color: var(--gold); box-shadow: 0 0 0 3px rgba(201,169,110,0.15); background: var(--surface);
+}
+.form-textarea { resize: vertical; min-height: 72px; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.img-preview-wrap {
+  border: 1px dashed var(--border); border-radius: 10px;
+  background: var(--bg); margin-top: 7px;
+  display: flex; align-items: center; justify-content: center; height: 130px; overflow: hidden;
+}
+.img-preview-wrap img { width: 100%; height: 100%; object-fit: cover; }
+.img-preview-placeholder {
+  color: var(--text-muted); text-align: center;
+  font-size: 0.75rem; font-weight: 300;
+  display: flex; flex-direction: column; align-items: center; gap: 5px;
+}
+.img-preview-placeholder svg { width: 26px; height: 26px; opacity: 0.3; }
+.modal-footer { display: flex; gap: 10px; margin-top: 6px; }
+.btn-cancel {
+  flex: 1; padding: 11px; border: 1px solid var(--border); border-radius: 10px;
+  background: transparent; font-family: 'DM Sans', sans-serif;
+  font-size: 0.85rem; color: var(--text-muted); cursor: pointer; transition: background 0.2s;
+}
+.btn-cancel:hover { background: var(--surface2); }
+.btn-save {
+  flex: 2; padding: 11px; border: none; border-radius: 10px;
+  background: var(--accent); font-family: 'DM Sans', sans-serif;
+  font-size: 0.85rem; color: var(--accent-text); cursor: pointer;
+  transition: background 0.2s, transform 0.15s; letter-spacing: 0.03em;
+}
+.btn-save:hover { background: var(--accent-light); transform: translateY(-1px); }
+
+/* Import modal */
+.import-textarea {
+  width: 100%; padding: 11px 13px; border: 1px solid var(--border); border-radius: 10px;
+  background: var(--bg); font-family: monospace; font-size: 0.76rem; font-weight: 300;
+  color: var(--text); outline: none; resize: vertical; min-height: 150px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.import-textarea:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(201,169,110,0.15); }
+.import-hint { font-size: 0.73rem; color: var(--text-muted); margin-top: 7px; font-weight: 300; line-height: 1.5; }
+.import-merge-opts { display: flex; gap: 9px; margin-top: 13px; }
+.merge-opt {
+  flex: 1; padding: 9px 7px; border: 1px solid var(--border);
+  border-radius: 10px; background: var(--bg);
+  font-family: 'DM Sans', sans-serif; font-size: 0.76rem; font-weight: 400;
+  color: var(--text-muted); cursor: pointer; text-align: center; transition: all 0.2s;
+}
+.merge-opt:hover { border-color: var(--gold); color: var(--accent); }
+.merge-opt.selected { background: var(--accent); border-color: var(--accent); color: #fff; }
+.merge-opt strong { display: block; font-weight: 500; margin-bottom: 2px; font-size: 0.8rem; }
+
+/* Confirm */
+.confirm-overlay {
+  display: none; position: fixed; inset: 0; z-index: 500;
+  background: rgba(26,24,20,0.6); backdrop-filter: blur(4px);
+  align-items: center; justify-content: center;
+}
+.confirm-overlay.open { display: flex; }
+.confirm-box {
+  background: var(--surface); border-radius: 16px; padding: 30px;
+  max-width: 340px; width: 90%; box-shadow: var(--shadow-lg);
+  text-align: center; animation: modalIn 0.2s ease;
+}
+.confirm-box h3 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.3rem; font-weight: 600; color: var(--accent); margin-bottom: 8px;
+}
+.confirm-box p { font-size: 0.83rem; color: var(--text-muted); font-weight: 300; line-height: 1.6; }
+.confirm-actions { display: flex; gap: 9px; margin-top: 22px; }
+.btn-confirm-cancel {
+  flex: 1; padding: 10px; border: 1px solid var(--border); border-radius: 10px;
+  background: transparent; font-family: 'DM Sans', sans-serif; font-size: 0.83rem;
+  color: var(--text-muted); cursor: pointer; transition: background 0.2s;
+}
+.btn-confirm-cancel:hover { background: var(--surface2); }
+.btn-confirm-ok {
+  flex: 1; padding: 10px; border: none; border-radius: 10px;
+  background: var(--danger); font-family: 'DM Sans', sans-serif; font-size: 0.83rem;
+  color: #fff; cursor: pointer; transition: opacity 0.2s;
+}
+.btn-confirm-ok:hover { opacity: 0.85; }
+
+/* Toast */
+.toast {
+  position: fixed; bottom: calc(var(--nav-h) + 8px); right: 20px; z-index: 600;
+  background: var(--accent); color: #fff;
+  padding: 11px 18px; border-radius: 10px;
+  font-size: 0.83rem; font-weight: 300;
+  box-shadow: var(--shadow-lg);
+  transform: translateY(60px); opacity: 0;
+  transition: transform 0.3s cubic-bezier(.34,1.56,.64,1), opacity 0.3s;
+  pointer-events: none;
+}
+.toast.show { transform: translateY(0); opacity: 1; }
+
+@media (max-width: 600px) {
+  main, .imc-page { padding: 1.5rem 1rem; }
+  .imc-inputs { grid-template-columns: 1fr; }
+  .form-row { grid-template-columns: 1fr; }
+  .imc-result.visible { flex-direction: column; text-align: center; }
+  .modal-header, .modal-body { padding-left: 18px; padding-right: 18px; }
+  .logo { font-size: 1.4rem; }
+  .header-inner { padding: 0 0.8rem; }
+  .header-actions { gap: 6px; }
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="header-inner">
+    <div class="logo">FOR<span>MA</span></div>
+    <div class="header-actions">
+      <button class="btn-theme" id="themeBtn" onclick="toggleTheme()" title="Trocar Tema">
+        <svg class="theme-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        <svg class="theme-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      </button>
+
+      <div class="transfer-wrap" id="transferWrap">
+        <button class="btn-gear" id="transferBtn" onclick="toggleTransferMenu()" title="Configurações">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        </button>
+        <div class="transfer-menu" id="transferMenu">
+          <div class="transfer-menu-header">Configurações</div>
+          <button class="transfer-item" onclick="exportJSON()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            <div class="item-info"><span class="item-label">Exportar JSON</span><span class="item-sub">Baixar todos os exercícios</span></div>
+          </button>
+          <button class="transfer-item" onclick="openImportModal()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            <div class="item-info"><span class="item-label">Importar JSON</span><span class="item-sub">Carregar de um arquivo</span></div>
+          </button>
+          <button class="transfer-item" onclick="copyJSON()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            <div class="item-info"><span class="item-label">Copiar JSON</span><span class="item-sub">Copiar para área de transferência</span></div>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- PAGES -->
+<!-- EXERCÍCIOS -->
+<div class="page active" id="page-exercises">
+  <main>
+    <div class="controls">
+      <div class="search-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input class="search-input" type="text" id="searchInput" placeholder="Buscar exercício..." oninput="renderAll()">
+      </div>
+      <div class="filter-btns" id="filterBtns"></div>
+    </div>
+    <div id="exerciseSections"></div>
+  </main>
+</div>
+
+<!-- IMC -->
+<div class="page" id="page-imc">
+  <div class="imc-page">
+
+    <div class="imc-calc-card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+        <h2>Meu IMC</h2>
+        <button class="btn-add" style="position:static;width:auto;height:auto;padding:8px 16px;border-radius:10px;font-size:0.85rem;" onclick="openIMCModal()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:16px;height:16px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <span style="display:inline;margin-left:5px;">Nova Medição</span>
+        </button>
+      </div>
+      
+      <div id="imcEmptyState" class="history-empty" style="padding: 1rem 0 0;">
+        Nenhuma medição registrada. Clique em "Nova Medição" para começar.
+      </div>
+
+      <div class="imc-result" id="imcResult">
+        <div class="imc-number" id="imcValue">—</div>
+        <div class="imc-info">
+          <div class="imc-class" id="imcClass"></div>
+          <div class="imc-desc" id="imcDesc"></div>
+          <div class="imc-scale" style="margin-top:10px">
+            <div class="imc-scale-bar">
+              <div class="imc-marker" id="imcMarker" style="left:0%"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="imc-history-card">
+      <h2>Histórico de Peso/IMC</h2>
+      <div id="imcHistoryList"></div>
+    </div>
+
+    <div class="imc-chart-card">
+      <h2>Evolução do Peso</h2>
+      <div id="imcChartWrap">
+        <div class="chart-empty" id="imcChartEmpty">Registre seu peso para ver o acompanhamento.</div>
+        <canvas id="imcChart" style="display:none; height: 300px;"></canvas>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- FAVORITOS -->
+<div class="page" id="page-favorites">
+  <main>
+    <div id="favSections"></div>
+  </main>
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav">
+  <button class="nav-item active" id="nav-exercises" onclick="switchTab('exercises')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+    <span>Exercícios</span>
+    <div class="nav-pip"></div>
+  </button>
+  <button class="nav-item" id="nav-imc" onclick="switchTab('imc')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+    <span>IMC</span>
+    <div class="nav-pip"></div>
+  </button>
+  <button class="nav-item" id="nav-favorites" onclick="switchTab('favorites')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+    <span>Favoritos</span>
+    <div class="nav-pip"></div>
+  </button>
+</nav>
+
+<!-- MODAL EXERCÍCIO -->
+<div class="modal-overlay" id="modalOverlay" onclick="handleOverlayClick(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modalTitle">Novo Exercício</div>
+      <button class="modal-close" onclick="closeModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Nome *</label>
+          <input class="form-input" id="fName" type="text" placeholder="Ex: Supino Reto">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Grupo Muscular *</label>
+          <input class="form-input" id="fMuscle" list="muscleList" placeholder="Selecione ou digite...">
+          <datalist id="muscleList">
+            <option>Peito</option><option>Costas</option><option>Ombros</option>
+            <option>Bíceps</option><option>Tríceps</option><option>Pernas</option>
+            <option>Glúteos</option><option>Abdômen</option><option>Cardio</option><option>Full Body</option>
+          </datalist>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Descrição</label>
+        <textarea class="form-textarea" id="fDesc" placeholder="Execução do exercício..."></textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Séries</label>
+          <input class="form-input" id="fSeries" type="text" placeholder="Ex: 4x12">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Descanso</label>
+          <input class="form-input" id="fRest" type="text" placeholder="Ex: 60s">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Foto do Exercício</label>
+        <div style="display:flex;gap:7px;margin-bottom:7px">
+          <input class="form-input" id="fImg" type="url" placeholder="URL da foto (https://...)" oninput="previewImg()" style="flex:1">
+          <button class="btn-gear" type="button" onclick="document.getElementById('fFile').click()" title="Carregar do dispositivo" style="border-radius:10px;width:42px;height:42px">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          </button>
+          <input type="file" id="fFile" accept="image/*" style="display:none" onchange="handleLocalImage(event)">
+        </div>
+        <div class="img-preview-wrap" id="imgPreview">
+          <div class="img-preview-placeholder">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            <span>Prévia da imagem</span>
+          </div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Link YouTube</label>
+        <input class="form-input" id="fYt" type="url" placeholder="https://youtube.com/...">
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
+        <button class="btn-save" onclick="saveExercise()">Salvar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL IMPORTAR -->
+<div class="modal-overlay" id="importOverlay" onclick="handleImportOverlayClick(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Importar Exercícios</div>
+      <button class="modal-close" onclick="closeImportModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Cole o JSON</label>
+        <textarea class="import-textarea" id="importTextarea" placeholder='[{"name":"Supino",...}]'></textarea>
+        <p class="import-hint">Cole o conteúdo exportado ou arraste um arquivo <strong>.json</strong> aqui.</p>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Modo de importação</label>
+        <div class="import-merge-opts">
+          <button class="merge-opt selected" id="optMerge" onclick="selectMergeOpt('merge')">
+            <strong>Mesclar</strong>adiciona ao existente
+          </button>
+          <button class="merge-opt" id="optReplace" onclick="selectMergeOpt('replace')">
+            <strong>Substituir</strong>apaga e importa
+          </button>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" onclick="closeImportModal()">Cancelar</button>
+        <button class="btn-save" onclick="doImport()">Importar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM -->
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-box">
+    <h3>Confirmar exclusão</h3>
+    <p>Esta ação não pode ser desfeita.</p>
+    <div class="confirm-actions">
+      <button class="btn-confirm-cancel" onclick="closeConfirm()">Cancelar</button>
+      <button class="btn-confirm-ok" id="confirmOkBtn">Excluir</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL IMC -->
+<div class="modal-overlay" id="imcModalOverlay" onclick="if(event.target===this) closeIMCModal()">
+  <div class="modal" style="max-width: 360px;">
+    <div class="modal-header">
+      <div class="modal-title">Nova Medição</div>
+      <button class="modal-close" onclick="closeIMCModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Peso (kg)</label>
+        <input class="form-input" id="imcPeso" type="number" placeholder="70.5" min="20" max="300" step="0.1">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Altura (cm)</label>
+        <input class="form-input" id="imcAltura" type="number" placeholder="175" min="100" max="250" step="1">
+      </div>
+      <div style="margin-top:20px; padding-top:15px; border-top:1px dashed var(--border);">
+        <label class="form-label" style="margin-bottom:12px; color:var(--accent); font-weight:600;">Configurar Metas</label>
+        <div class="form-row" style="grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
+          <div class="form-group">
+            <label class="form-label" style="font-size:0.6rem">Inicial</label>
+            <input class="form-input" id="goalInitial" type="number" placeholder="85" step="0.1">
+          </div>
+          <div class="form-group">
+            <label class="form-label" style="font-size:0.6rem">Meta</label>
+            <input class="form-input" id="goalMeta" type="number" placeholder="75" step="0.1">
+          </div>
+          <div class="form-group">
+            <label class="form-label" style="font-size:0.6rem">Desejado</label>
+            <input class="form-input" id="goalDesired" type="number" placeholder="70" step="0.1">
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" onclick="closeIMCModal()">Cancelar</button>
+        <button class="btn-save" onclick="calcIMC()">Salvar Medição</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FAB BUTTON -->
+<button class="btn-add" id="btnAddExercise" onclick="openModal()" title="Novo Exercício">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+  <span>Novo Exercício</span>
+</button>
+
+<input type="file" id="fileInput" accept=".json" style="display:none" onchange="handleFileInput(event)">
+<div class="toast" id="toast"></div>
+
+<script>
+// ── DATA ──
+const MUSCLES = ['Peito','Costas','Ombros','Bíceps','Tríceps','Pernas','Glúteos','Abdômen','Cardio','Full Body'];
+let exercises = JSON.parse(localStorage.getItem('forma_exercises') || '[]');
+let imcHistory = JSON.parse(localStorage.getItem('forma_imc') || '[]');
+let weightGoals = JSON.parse(localStorage.getItem('forma_goals') || '{"initial":"","meta":"","desired":""}');
+let editingId = null;
+let activeFilter = 'Todos';
+let confirmCb = null;
+let mergeMode = 'merge';
+let activeTab = 'exercises';
+let imcChart = null;
+let activeTimers = {};
+
+function saveEx() { localStorage.setItem('forma_exercises', JSON.stringify(exercises)); }
+function saveIMC() { localStorage.setItem('forma_imc', JSON.stringify(imcHistory)); }
+
+function loadGoals() {
+  // Goals are now handled within the modal, this function can just keep the values in the global object
+}
+
+// ── THEME ──
+function initTheme() {
+  const t = localStorage.getItem('forma_theme') || 'light';
+  document.body.setAttribute('data-theme', t);
+}
+function toggleTheme() {
+  const t = document.body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  document.body.setAttribute('data-theme', t);
+  localStorage.setItem('forma_theme', t);
+}
+initTheme();
+
+// ── TOAST ──
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+// ── TABS ──
+function switchTab(tab) {
+  activeTab = tab;
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + tab).classList.add('active');
+  document.getElementById('nav-' + tab).classList.add('active');
+
+  const addBtn = document.getElementById('btnAddExercise');
+  addBtn.classList.toggle('hidden', tab !== 'exercises');
+
+  if (tab === 'favorites') renderFavorites();
+  if (tab === 'imc') renderIMCHistory();
+}
+
+// ── EXERCISES ──
+function buildFilters() {
+  const used = [...new Set(exercises.map(e => e.muscle))].filter(Boolean);
+  const groups = ['Todos', ...used.sort()];
+  document.getElementById('filterBtns').innerHTML = groups.map(g =>
+    `<button class="filter-btn ${g === activeFilter ? 'active' : ''}" onclick="setFilter('${g}')">${g}</button>`
+  ).join('');
+  
+  // Update datalist for modal
+  const dl = document.getElementById('muscleList');
+  if (dl) {
+    const options = [...new Set([...MUSCLES, ...used])].sort();
+    dl.innerHTML = options.map(o => `<option value="${o}">`).join('');
+  }
+}
+function setFilter(f) { activeFilter = f; buildFilters(); renderAll(); }
+
+function renderAll() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  let filtered = exercises.filter(e => {
+    const mq = e.name.toLowerCase().includes(q) || (e.desc||'').toLowerCase().includes(q);
+    const mf = activeFilter === 'Todos' || e.muscle === activeFilter;
+    return mq && mf;
+  });
+  buildFilters();
+  const container = document.getElementById('exerciseSections');
+  if (!filtered.length) {
+    container.innerHTML = `<div class="exercise-grid"><div class="empty-state">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <p>Nenhum exercício encontrado</p><small>Adicione um novo exercício.</small></div></div>`;
+    return;
+  }
+  const byMuscle = {};
+  filtered.forEach(e => { const k = e.muscle||'Sem categoria'; if(!byMuscle[k]) byMuscle[k]=[]; byMuscle[k].push(e); });
+  
+  const muscleGroups = [...new Set(exercises.map(e => e.muscle).filter(Boolean))].sort();
+  const groups = activeFilter !== 'Todos'
+    ? Object.entries(byMuscle)
+    : muscleGroups.filter(m => byMuscle[m]).map(m => [m, byMuscle[m]]).concat(byMuscle['Sem categoria']?[['Sem categoria',byMuscle['Sem categoria']]]:[]);
+  container.innerHTML = groups.map(([g, items]) => `
+    <div>
+      <div class="section-header">
+        <span class="section-title">${g}</span>
+        <span class="section-count">${items.length} exercício${items.length!==1?'s':''}</span>
+      </div>
+      <div class="exercise-grid">${items.map(e => cardHTML(e)).join('')}</div>
+    </div>`).join('');
+}
+
+function renderFavorites() {
+  const favs = exercises.filter(e => e.fav);
+  const container = document.getElementById('favSections');
+  if (!favs.length) {
+    container.innerHTML = `<div class="exercise-grid"><div class="empty-state">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+      <p>Sem favoritos ainda</p><small>Toque na estrela nos exercícios para favoritar.</small></div></div>`;
+    return;
+  }
+  container.innerHTML = `
+    <div class="section-header" style="margin-top:0">
+      <span class="section-title">Favoritos</span>
+      <span class="section-count">${favs.length} exercício${favs.length!==1?'s':''}</span>
+    </div>
+    <div class="exercise-grid">${favs.map(e => cardHTML(e)).join('')}</div>`;
+}
+
+function cardHTML(e) {
+  const imgContent = e.img ? `<img src="${e.img}" alt="${e.name}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">` : '';
+  const placeholder = `<div class="card-img-placeholder" style="${e.img?'display:none':''}">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+    <span>Sem imagem</span></div>`;
+  const ytBtn = e.yt
+    ? `<a class="btn-yt" href="${e.yt}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0C.488 3.45.029 5.804 0 12c.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0C23.512 20.55 23.971 18.196 24 12c-.029-6.185-.484-8.549-4.385-8.816zM9 16V8l8 4-8 4z"/></svg>Vídeo</a>`
+    : `<span class="btn-yt disabled"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0C.488 3.45.029 5.804 0 12c.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0C23.512 20.55 23.971 18.196 24 12c-.029-6.185-.484-8.549-4.385-8.816zM9 16V8l8 4-8 4z"/></svg>Vídeo</span>`;
+  
+  const restSecs = parseRest(e.rest);
+  const restBtn = restSecs > 0 
+    ? `<button class="btn-edit" id="timer-btn-${e.id}" onclick="toggleTimer('${e.id}', ${restSecs})" title="Iniciar Descanso" style="width: auto; padding: 0 10px; font-size: 0.75rem; gap: 5px;">
+        <span id="timer-label-${e.id}">⏱️ ${e.rest}</span>
+       </button>` 
+    : '';
+
+  return `<div class="card">
+    <div class="card-img-wrap">
+      ${imgContent}${placeholder}
+      ${e.muscle?`<span class="card-muscle-badge">${e.muscle}</span>`:''}
+      <button class="card-fav-btn ${e.fav?'active':''}" onclick="toggleFav('${e.id}')" title="${e.fav?'Remover':'Favoritar'}">
+        <svg viewBox="0 0 24 24" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+      </button>
+    </div>
+    <div class="card-body">
+      <div class="card-name">${e.name}</div>
+      ${e.series||e.rest?`<div class="card-desc" style="color:var(--accent-light);font-weight:400;font-size:0.76rem;margin-bottom:3px">${[e.series,e.rest?'⏱ '+e.rest:''].filter(Boolean).join(' · ')}</div>`:''}
+      ${e.desc?`<div class="card-desc">${e.desc}</div>`:''}
+      <div class="card-actions">
+        ${ytBtn}
+        ${restBtn}
+        <button class="btn-edit" onclick="openEdit('${e.id}')" title="Editar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+        <button class="btn-del" onclick="confirmDelete('${e.id}')" title="Excluir"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg></button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function toggleFav(id) {
+  const e = exercises.find(x => x.id === id);
+  if (!e) return;
+  e.fav = !e.fav;
+  saveEx(); renderAll();
+  if (activeTab === 'favorites') renderFavorites();
+  showToast(e.fav ? '⭐ Adicionado aos favoritos' : 'Removido dos favoritos');
+}
+
+// ── EXERCISE MODAL ──
+function openModal() {
+  editingId = null;
+  document.getElementById('modalTitle').textContent = 'Novo Exercício';
+  clearForm();
+  document.getElementById('modalOverlay').classList.add('open');
+}
+function openEdit(id) {
+  const e = exercises.find(x => x.id === id);
+  if (!e) return;
+  editingId = id;
+  document.getElementById('modalTitle').textContent = 'Editar Exercício';
+  document.getElementById('fName').value = e.name||'';
+  document.getElementById('fMuscle').value = e.muscle||'';
+  document.getElementById('fDesc').value = e.desc||'';
+  document.getElementById('fSeries').value = e.series||'';
+  document.getElementById('fRest').value = e.rest||'';
+  document.getElementById('fImg').value = e.img||'';
+  document.getElementById('fYt').value = e.yt||'';
+  previewImg();
+  document.getElementById('modalOverlay').classList.add('open');
+}
+function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); editingId=null; clearForm(); }
+function handleOverlayClick(ev) { if(ev.target===document.getElementById('modalOverlay')) closeModal(); }
+function clearForm() {
+  ['fName','fMuscle','fDesc','fSeries','fRest','fImg','fYt'].forEach(id => document.getElementById(id).value='');
+  document.getElementById('imgPreview').innerHTML=`<div class="img-preview-placeholder">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+    <span>Prévia da imagem</span></div>`;
+}
+function previewImg() {
+  const url = document.getElementById('fImg').value.trim();
+  const wrap = document.getElementById('imgPreview');
+  if (!url) { wrap.innerHTML=`<div class="img-preview-placeholder"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><span>Prévia da imagem</span></div>`; return; }
+  wrap.innerHTML=`<img src="${url}" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.innerHTML='<div class=\\'img-preview-placeholder\\'><span>Imagem não encontrada</span></div>'">`;
+}
+function handleLocalImage(ev) {
+  const file = ev.target.files[0];
+  if (!file) return;
+  
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      let w = img.width, h = img.height;
+      const MAX = 800;
+      if (w > h && w > MAX) { h *= MAX/w; w = MAX; }
+      else if (h > MAX) { w *= MAX/h; h = MAX; }
+      
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, w, h);
+      
+      const compressed = canvas.toDataURL('image/jpeg', 0.7);
+      document.getElementById('fImg').value = compressed;
+      previewImg();
+      showToast('📸 Foto otimizada para economia de espaço!');
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+// ── TIMER LOGIC ──
+function parseRest(str) {
+  if (!str) return 0;
+  const match = str.match(/(\d+)/);
+  return match ? parseInt(match[1]) : 0;
+}
+function toggleTimer(id, seconds) {
+  if (activeTimers[id]) {
+    clearInterval(activeTimers[id].int);
+    delete activeTimers[id];
+    document.getElementById(`timer-btn-${id}`).classList.remove('active');
+    document.getElementById(`timer-label-${id}`).textContent = `⏱️ ${exercises.find(x=>x.id===id).rest}`;
+    return;
+  }
+  let timeLeft = seconds;
+  const btn = document.getElementById(`timer-btn-${id}`);
+  const label = document.getElementById(`timer-label-${id}`);
+  btn.classList.add('active');
+  activeTimers[id] = {
+    timeLeft,
+    int: setInterval(() => {
+      timeLeft--;
+      if (timeLeft <= 0) {
+        clearInterval(activeTimers[id].int);
+        delete activeTimers[id];
+        btn.classList.remove('active');
+        label.textContent = '✅ Pronto!';
+        showToast('🔔 Tempo de descanso finalizado!');
+        try { new Audio('data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YTtvT18AAICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA').play(); } catch(e){}
+        setTimeout(() => { label.textContent = `⏱️ ${exercises.find(x=>x.id===id).rest}`; }, 3000);
+      } else {
+        label.textContent = `⏳ ${timeLeft}s`;
+      }
+    }, 1000)
+  };
+}
+function saveExercise() {
+  const name = document.getElementById('fName').value.trim();
+  const muscle = document.getElementById('fMuscle').value;
+  if (!name) { showToast('⚠️ Informe o nome'); return; }
+  if (!muscle) { showToast('⚠️ Selecione o grupo muscular'); return; }
+  const data = { name, muscle,
+    desc: document.getElementById('fDesc').value.trim(),
+    series: document.getElementById('fSeries').value.trim(),
+    rest: document.getElementById('fRest').value.trim(),
+    img: document.getElementById('fImg').value.trim(),
+    yt: document.getElementById('fYt').value.trim(),
+  };
+  if (editingId) {
+    const idx = exercises.findIndex(x => x.id === editingId);
+    exercises[idx] = { ...exercises[idx], ...data };
+    showToast('✏️ Exercício atualizado!');
+  } else {
+    exercises.push({ ...data, id: Date.now().toString(), fav: false });
+    showToast('✅ Exercício adicionado!');
+  }
+  saveEx(); closeModal(); renderAll();
+}
+
+// ── DELETE ──
+function confirmDelete(id) {
+  confirmCb = () => { exercises = exercises.filter(x => x.id !== id); saveEx(); renderAll(); if(activeTab==='favorites') renderFavorites(); closeConfirm(); showToast('🗑️ Removido.'); };
+  document.getElementById('confirmOkBtn').onclick = confirmCb;
+  document.getElementById('confirmOverlay').classList.add('open');
+}
+function closeConfirm() { document.getElementById('confirmOverlay').classList.remove('open'); }
+
+// ── TRANSFER ──
+function toggleTransferMenu() {
+  const menu = document.getElementById('transferMenu');
+  const btn = document.getElementById('transferBtn');
+  const isOpen = menu.classList.toggle('open');
+  btn.classList.toggle('spinning', isOpen);
+}
+function closeTransferMenu() {
+  document.getElementById('transferMenu').classList.remove('open');
+  document.getElementById('transferBtn').classList.remove('spinning');
+}
+document.addEventListener('click', ev => {
+  if (!document.getElementById('transferWrap').contains(ev.target)) closeTransferMenu();
+});
+function exportJSON() {
+  if (!exercises.length) { showToast('⚠️ Nenhum exercício.'); closeTransferMenu(); return; }
+  const blob = new Blob([JSON.stringify(exercises, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = `forma-${new Date().toISOString().slice(0,10)}.json`; a.click();
+  showToast(`✅ ${exercises.length} exercício(s) exportado(s)!`); closeTransferMenu();
+}
+function copyJSON() {
+  if (!exercises.length) { showToast('⚠️ Nenhum exercício.'); closeTransferMenu(); return; }
+  navigator.clipboard.writeText(JSON.stringify(exercises, null, 2))
+    .then(() => showToast(`📋 JSON copiado!`)).catch(() => showToast('❌ Não foi possível copiar.'));
+  closeTransferMenu();
+}
+function openImportModal() {
+  closeTransferMenu();
+  document.getElementById('importTextarea').value = '';
+  selectMergeOpt('merge');
+  document.getElementById('importOverlay').classList.add('open');
+}
+function closeImportModal() { document.getElementById('importOverlay').classList.remove('open'); }
+function handleImportOverlayClick(ev) { if(ev.target===document.getElementById('importOverlay')) closeImportModal(); }
+function selectMergeOpt(m) {
+  mergeMode = m;
+  document.getElementById('optMerge').classList.toggle('selected', m==='merge');
+  document.getElementById('optReplace').classList.toggle('selected', m==='replace');
+}
+function doImport() {
+  const raw = document.getElementById('importTextarea').value.trim();
+  if (!raw) { showToast('⚠️ Cole um JSON.'); return; }
+  let imp;
+  try { imp = JSON.parse(raw); if(!Array.isArray(imp)) throw 0; } catch { showToast('❌ JSON inválido.'); return; }
+  const clean = imp.map(e => ({
+    id: mergeMode==='merge' ? Date.now()+Math.random().toString(36).slice(2) : (e.id||Date.now().toString()),
+    name: e.name||'Sem nome', muscle: e.muscle||'', desc: e.desc||'',
+    series: e.series||'', rest: e.rest||'', img: e.img||'', yt: e.yt||'', fav: !!e.fav,
+  }));
+  exercises = mergeMode==='replace' ? clean : [...exercises, ...clean];
+  saveEx(); renderAll(); closeImportModal(); showToast(`✅ ${clean.length} importado(s)!`);
+}
+function handleFileInput(ev) {
+  const file = ev.target.files[0]; if (!file) return;
+  const r = new FileReader();
+  r.onload = e => { document.getElementById('importTextarea').value = e.target.result; openImportModal(); };
+  r.readAsText(file); ev.target.value = '';
+}
+
+// ── IMC ──
+const IMC_CLASSES = [
+  { max: 16,   label: 'Magreza grave',    color: '#2980b9', desc: 'Peso muito abaixo do ideal. Consulte um médico.',       cls: 'imc-blue',   pct: 2  },
+  { max: 17,   label: 'Magreza moderada', color: '#2980b9', desc: 'Abaixo do peso recomendado.',                           cls: 'imc-blue',   pct: 8  },
+  { max: 18.5, label: 'Magreza leve',     color: '#5dade2', desc: 'Levemente abaixo do ideal.',                            cls: 'imc-blue',   pct: 18 },
+  { max: 25,   label: 'Peso normal ✓',    color: '#27ae60', desc: 'Peso saudável. Continue assim!',                        cls: 'imc-green',  pct: 40 },
+  { max: 30,   label: 'Sobrepeso',        color: '#f39c12', desc: 'Acima do peso ideal. Atenção à dieta e exercícios.',    cls: 'imc-yellow', pct: 58 },
+  { max: 35,   label: 'Obesidade grau I', color: '#e67e22', desc: 'Obesidade leve. Recomenda-se acompanhamento médico.',   cls: 'imc-orange', pct: 72 },
+  { max: 40,   label: 'Obesidade grau II',color: '#e74c3c', desc: 'Obesidade moderada. Procure um especialista.',          cls: 'imc-red',    pct: 84 },
+  { max: 999,  label: 'Obesidade grau III',color:'#c0392b', desc: 'Obesidade grave. Acompanhamento médico urgente.',       cls: 'imc-red',    pct: 96 },
+];
+
+function getIMCClass(imc) { return IMC_CLASSES.find(c => imc < c.max) || IMC_CLASSES[IMC_CLASSES.length-1]; }
+
+function calcIMC() {
+  const peso = parseFloat(document.getElementById('imcPeso').value);
+  const alturaCm = parseFloat(document.getElementById('imcAltura').value);
+  if (!peso || !alturaCm || peso < 20 || alturaCm < 100) { showToast('⚠️ Informe peso e altura válidos.'); return; }
+  const alturaM = alturaCm / 100;
+  const imc = peso / (alturaM * alturaM);
+  const info = getIMCClass(imc);
+
+  document.getElementById('imcValue').textContent = imc.toFixed(1);
+  const classEl = document.getElementById('imcClass');
+  classEl.textContent = info.label;
+  classEl.className = 'imc-class ' + info.cls;
+  document.getElementById('imcDesc').textContent = info.desc;
+  document.getElementById('imcMarker').style.left = info.pct + '%';
+  document.getElementById('imcResult').classList.add('visible');
+
+  // save to history
+  imcHistory.unshift({
+    id: Date.now().toString(),
+    imc: parseFloat(imc.toFixed(1)),
+    peso, altura: alturaCm,
+    label: info.label, color: info.color,
+    date: new Date().toLocaleDateString('pt-BR', { day:'2-digit', month:'short', year:'numeric' })
+  });
+  saveIMC(); renderIMCHistory(); closeIMCModal();
+  saveGoalsFromModal();
+  showToast('📊 Medição salva no histórico!');
+}
+
+function saveGoalsFromModal() {
+  weightGoals = {
+    initial: document.getElementById('goalInitial').value,
+    meta: document.getElementById('goalMeta').value,
+    desired: document.getElementById('goalDesired').value
+  };
+  localStorage.setItem('forma_goals', JSON.stringify(weightGoals));
+  renderIMCChart();
+}
+
+function openIMCModal() {
+  document.getElementById('imcPeso').value = '';
+  document.getElementById('imcAltura').value = imcHistory.length > 0 ? imcHistory[0].altura : '';
+  
+  // pre-fill goals
+  document.getElementById('goalInitial').value = weightGoals.initial;
+  document.getElementById('goalMeta').value = weightGoals.meta;
+  document.getElementById('goalDesired').value = weightGoals.desired;
+  
+  document.getElementById('imcModalOverlay').classList.add('open');
+}
+function closeIMCModal() { document.getElementById('imcModalOverlay').classList.remove('open'); }
+
+function renderIMCHistory() {
+  const el = document.getElementById('imcHistoryList');
+  const empty = document.getElementById('imcEmptyState');
+  const result = document.getElementById('imcResult');
+  
+  if (!imcHistory.length) {
+    el.innerHTML = '<div class="history-empty">Nenhuma medição ainda no histórico.</div>';
+    if(empty) empty.style.display = 'block';
+    if(result) result.style.display = 'none';
+    renderIMCChart(); return;
+  }
+  
+  if(empty) empty.style.display = 'none';
+  if(result) {
+    const last = imcHistory[0];
+    const info = getIMCClass(last.imc);
+    document.getElementById('imcValue').textContent = last.imc.toFixed(1);
+    const classEl = document.getElementById('imcClass');
+    classEl.textContent = info.label;
+    classEl.className = 'imc-class ' + info.cls;
+    document.getElementById('imcDesc').textContent = info.desc;
+    document.getElementById('imcMarker').style.left = info.pct + '%';
+    result.style.display = 'flex';
+    result.classList.add('visible');
+  }
+
+  el.innerHTML = `<div class="history-list">${imcHistory.map(h => `
+    <div class="history-item">
+      <div class="history-dot" style="background:${h.color}"></div>
+      <div class="history-imc">${h.imc}</div>
+      <div class="history-meta">
+        <div class="history-class">${h.label}</div>
+        <div class="history-date">${h.date} · ${h.peso}kg / ${h.altura}cm</div>
+      </div>
+      <button class="btn-del-hist" onclick="deleteIMC('${h.id}')" title="Remover">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
+      </button>
+    </div>`).join('')}</div>`;
+  renderIMCChart();
+}
+
+function deleteIMC(id) {
+  imcHistory = imcHistory.filter(h => h.id !== id);
+  saveIMC(); renderIMCHistory(); showToast('🗑️ Medição removida.');
+}
+
+function renderIMCChart() {
+  const el = document.getElementById('imcChart');
+  const empty = document.getElementById('imcChartEmpty');
+  if (!imcHistory.length) {
+    el.style.display = 'none'; empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none'; el.style.display = 'block';
+  if (imcChart) imcChart.destroy();
+
+  const data = [...imcHistory].reverse();
+  const labels = data.map(h => h.date);
+  const weights = data.map(h => h.peso);
+  
+  const datasets = [{
+    label: 'Média de Peso (mês)',
+    data: weights,
+    borderColor: '#3498db',
+    backgroundColor: 'rgba(52, 152, 219, 0.1)',
+    pointBackgroundColor: '#fff',
+    pointBorderColor: '#3498db',
+    pointBorderWidth: 2,
+    pointRadius: 5,
+    tension: 0.3,
+    borderWidth: 3,
+    fill: false,
+    order: 1
+  }];
+
+  if (weightGoals.initial) {
+    datasets.push({
+      label: 'Peso Inicial',
+      data: Array(labels.length).fill(weightGoals.initial),
+      borderColor: '#e74c3c',
+      borderWidth: 2,
+      pointRadius: 0,
+      fill: false,
+      borderDash: [5, 5],
+      order: 2
+    });
+  }
+  if (weightGoals.meta) {
+    datasets.push({
+      label: 'Meta Atual',
+      data: Array(labels.length).fill(weightGoals.meta),
+      borderColor: '#f1c40f',
+      borderWidth: 2,
+      pointRadius: 0,
+      fill: false,
+      borderDash: [5, 5],
+      order: 3
+    });
+  }
+  if (weightGoals.desired) {
+    datasets.push({
+      label: 'Peso Desejado',
+      data: Array(labels.length).fill(weightGoals.desired),
+      borderColor: '#2ecc71',
+      borderWidth: 2,
+      pointRadius: 0,
+      fill: false,
+      borderDash: [5, 5],
+      order: 4
+    });
+  }
+
+  imcChart = new Chart(el, {
+    type: 'line',
+    data: { labels, datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: true,
+          position: 'top',
+          labels: { font: { family: 'DM Sans', size: 10 }, usePointStyle: true, boxWidth: 6, boxHeight: 6 }
+        },
+        tooltip: {
+          mode: 'nearest', intersect: true,
+          callbacks: { label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y} kg` }
+        }
+      },
+      interaction: {
+        intersect: true,
+        mode: 'nearest',
+      },
+      scales: {
+        y: {
+          grid: { color: 'rgba(0,0,0,0.05)' },
+          ticks: { font: { family: 'DM Sans', size: 11 }, callback: v => v + ' kg' }
+        },
+        x: {
+          grid: { display: false },
+          ticks: { font: { family: 'DM Sans', size: 10 }, maxRotation: 45, minRotation: 0 }
+        }
+      }
+    }
+  });
+}
+
+// ── KEYBOARD & CLICK ──
+document.addEventListener('keydown', ev => {
+  if (ev.key === 'Escape') { closeModal(); closeConfirm(); closeImportModal(); closeTransferMenu(); }
+});
+
+window.addEventListener('click', (e) => {
+  // Se clicar fora do gráfico, esconde o tooltip
+  if (imcChart && e.target.id !== 'imcChart') {
+    imcChart.setActiveElements([]);
+    imcChart.update();
+  }
+});
+
+// ── DRAG & DROP import ──
+document.addEventListener('DOMContentLoaded', () => {
+  const ta = document.getElementById('importTextarea');
+  ta.addEventListener('dragover', e => { e.preventDefault(); ta.style.borderColor='var(--gold)'; });
+  ta.addEventListener('dragleave', () => { ta.style.borderColor=''; });
+  ta.addEventListener('drop', e => {
+    e.preventDefault(); ta.style.borderColor='';
+    const file = e.dataTransfer.files[0];
+    if (!file||!file.name.endsWith('.json')) { showToast('⚠️ Arquivo .json necessário'); return; }
+    new FileReader().onload = ev => ta.value = ev.target.result;
+    new FileReader().readAsText(file);
+  });
+});
+
+// ── PWA ──
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then(reg => console.log('PWA carregado com sucesso!'))
+      .catch(err => console.log('Erro ao carregar PWA:', err));
+  });
+}
+
+// ── INIT ──
+buildFilters();
+renderAll();
+renderIMCHistory();
+loadGoals();
+</script>
+</body>
+</html>
